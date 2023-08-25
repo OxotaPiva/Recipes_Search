@@ -1,5 +1,7 @@
 package com.example.recipessearch.data.api
 
+import java.io.Serializable
+
 data class RecipeSearchResponse(
     val count: Int,
     val from: Int,
@@ -24,16 +26,16 @@ data class Recipe(
     val ingredients: List<Ingredient>,
     val totalTime: Int,
     val totalNutrients: Map<String, NutrientInfo>
-)
+) : Serializable
 
 data class Ingredient(
     val text: String,
     val weight: Double
-)
+) : Serializable
 
 data class NutrientInfo(
     val label: String,
     val quantity: Double,
     val unit: String
-)
+) : Serializable
 

@@ -2,8 +2,11 @@ package com.example.recipessearch.adapters
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.view.*
+import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.example.recipessearch.RecipeViewActivity
 import com.example.recipessearch.data.api.Recipe
 import com.example.recipessearch.data.api.RecipeHit
 import com.example.recipessearch.databinding.RecipeItemBinding
@@ -31,7 +34,10 @@ class RecipesAdapter(
         holder.bind(hits.recipe)
 
         holder.itemView.setOnClickListener {
-
+            val intent = Intent(context, RecipeViewActivity::class.java)
+            val recipeDetails = hits.recipe
+            intent.putExtra("recipeDetails", recipeDetails)
+            context.startActivity(intent)
         }
     }
 
