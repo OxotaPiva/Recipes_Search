@@ -2,6 +2,7 @@ package com.example.recipessearch
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
@@ -31,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         val service = Instance.api
-        getSavedListRecipes(service)
+
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 GlobalScope.launch {
@@ -51,6 +52,8 @@ class MainActivity : AppCompatActivity() {
 
         })
 
+        getSavedListRecipes(service)
+
     }
 
     private fun fetchRecipes(call: Call<RecipeSearchResponse>) {
@@ -60,6 +63,11 @@ class MainActivity : AppCompatActivity() {
                     val response = response.body()
                     val hits = response?.hits
                     recipesAdapter = hits?.let { RecipesAdapter(it, this@MainActivity) }!!
+                    if (recipesAdapter.itemCount == 0) {
+                        binding.emptyText.visibility = View.VISIBLE
+                    } else {
+                        binding.emptyText.visibility = View.GONE
+                    }
                     binding.recipeAdapter.adapter = recipesAdapter
                     binding.recipeAdapter.layoutManager = LinearLayoutManager(this@MainActivity)
                 } else {
@@ -80,36 +88,35 @@ class MainActivity : AppCompatActivity() {
                     .getDatabase(this@MainActivity)
                     .recipesDao()
                 val recipesDB = recipesDao.getAllRecipes()
-                val recipesList = emptyList<RecipeHit>()
-                val recipes = recipesList.toMutableList()
-                recipesDB.forEach { recipe ->
-                    val recipeCall = service.getRecipeByUri(recipe.uri)
-                    recipeCall.enqueue(object : Callback<RecipeSearchResponse> {
-                        override fun onResponse(call: Call<RecipeSearchResponse>, response: Response<RecipeSearchResponse>) {
-                            if (response.isSuccessful) {
-                                val response = response.body()
-                                val hits = response?.hits
-                                hits?.get(0)?.let { recipes.add(it) }
-                            } else {
-                                Toast.makeText(applicationContext, "Something went wrong", Toast.LENGTH_SHORT).show()
-                            }
-                        }
+                val recipes = mutableListOf<RecipeHit>()
 
-                        override fun onFailure(call: Call<RecipeSearchResponse>, t: Throwable) {
-                            Toast.makeText(applicationContext, t.toString(), Toast.LENGTH_LONG).show()
+                val deferredRecipes = recipesDB.map { recipe ->
+                    async(Dispatchers.IO) {
+                        val response = service.getRecipeByUri(recipe.uri).execute()
+                        if (response.isSuccessful) {
+                            response.body()?.hits?.getOrNull(0)
+                        } else {
+                            null
                         }
-                    })
+                    }
                 }
-                runOnUiThread {
+
+                val fetchedRecipes = deferredRecipes.mapNotNull { it.await() }
+                recipes.addAll(fetchedRecipes)
+
+                withContext(Dispatchers.Main) {
                     recipesAdapter =
-                        RecipesAdapter(recipes, this@MainActivity)
+                        RecipesAdapter(recipes, this@MainActivity, true)
+                    if (recipesAdapter.itemCount == 0) {
+                        binding.emptyText.visibility = View.VISIBLE
+                    } else {
+                        binding.emptyText.visibility = View.GONE
+                    }
                     binding.recipeAdapter.adapter = recipesAdapter
                     binding.recipeAdapter.layoutManager =
                         LinearLayoutManager(this@MainActivity)
                 }
             }
-
         }
-
     }
 }
