@@ -17,5 +17,8 @@ interface RecipesDao {
 
     @Query("DELETE FROM recipes WHERE uri = :recipeUri")
     fun deleteRecipeByUri(recipeUri: String)
+
+    @Query("SELECT COUNT(*) FROM recipes WHERE uri = :recipeUri")
+    fun checkRecipeExists(recipeUri: String): Int
 }
 

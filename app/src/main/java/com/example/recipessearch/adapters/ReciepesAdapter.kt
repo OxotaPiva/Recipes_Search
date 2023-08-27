@@ -5,23 +5,23 @@ import android.content.Context
 import android.content.Intent
 import android.view.*
 import android.widget.Toast
+import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipessearch.MainActivity
 import com.example.recipessearch.RecipeViewActivity
+import com.example.recipessearch.data.api.ApiService
 import com.example.recipessearch.data.api.Recipe
 import com.example.recipessearch.data.api.RecipeHit
 import com.example.recipessearch.data.api.RecipeSearchResponse
 import com.example.recipessearch.data.db.RecipesDao
 import com.example.recipessearch.data.db.RecipesDatabase
 import com.example.recipessearch.databinding.RecipeItemBinding
+import com.example.skytracker.data.api.Instance
 import com.squareup.picasso.Picasso
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -52,7 +52,9 @@ class RecipesAdapter(
             val intent = Intent(context, RecipeViewActivity::class.java)
             val recipeDetails = hits.recipe
             intent.putExtra("recipeDetails", recipeDetails)
-            context.startActivity(intent)
+            if(context is MainActivity) {
+                context.startChildActivity.launch(intent)
+            }
         }
     }
 
@@ -71,22 +73,27 @@ class RecipesAdapter(
                 binding.deleteFromFollowedButton.visibility = View.VISIBLE
             }
             binding.deleteFromFollowedButton.setOnClickListener {
-                GlobalScope.launch {
-                    recipesDao = RecipesDatabase
-                        .getDatabase(context)
-                        .recipesDao()
-                    recipesDao.deleteRecipeByUri(recipeData.uri)
-
-
-                }
                 if (context is MainActivity) {
-                    context.recreate()
+                    context.lifecycleScope.launch {
+                        withContext(Dispatchers.IO) {
+                            recipesDao = RecipesDatabase
+                                .getDatabase(context)
+                                .recipesDao()
+                            recipesDao.deleteRecipeByUri(recipeData.uri)
+
+                            withContext(Dispatchers.Main) {
+                                context.getSavedListRecipes(Instance.api)
+                            }
+                        }
+                    }
+
+                    Toast.makeText(context, "Рецепт удален из сохраненных", Toast.LENGTH_LONG).show()
                 }
-                Toast.makeText(context, "Рецепт удален из сохраненных", Toast.LENGTH_LONG).show()
-            }
-            Picasso.get()
-                .load(recipeData.image)
-                .into(binding.recipeImage)
+                Picasso.get()
+                    .load(recipeData.image)
+                    .into(binding.recipeImage)
+                }
+
 
         }
     }

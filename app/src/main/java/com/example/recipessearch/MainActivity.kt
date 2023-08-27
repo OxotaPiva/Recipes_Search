@@ -1,9 +1,12 @@
 package com.example.recipessearch
 
+import android.app.Activity
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,12 +29,15 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var recipesDao: RecipesDao
     private lateinit var recipesAdapter: RecipesAdapter
+    private lateinit var currentText: String
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         val service = Instance.api
+
+        currentText = ""
 
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
@@ -44,9 +50,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
-                if (newText.isEmpty()) {
+                if (newText.isEmpty() || newText == "") {
                     getSavedListRecipes(service)
                 }
+                currentText = newText
                 return true
             }
 
@@ -54,6 +61,14 @@ class MainActivity : AppCompatActivity() {
 
         getSavedListRecipes(service)
 
+    }
+
+    val startChildActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            if (currentText.isEmpty() || currentText == "") {
+                getSavedListRecipes(Instance.api)
+            }
+        }
     }
 
     private fun fetchRecipes(call: Call<RecipeSearchResponse>) {
@@ -81,7 +96,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun getSavedListRecipes(service: ApiService) {
+    fun getSavedListRecipes(service: ApiService) {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 recipesDao = RecipesDatabase
