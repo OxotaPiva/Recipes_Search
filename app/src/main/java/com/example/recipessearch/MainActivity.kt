@@ -1,7 +1,6 @@
 package com.example.recipessearch
 
-import android.app.Activity
-import android.content.Intent
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -9,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.recipessearch.adapters.RecipesAdapter
 import com.example.recipessearch.data.api.ApiService
@@ -84,7 +84,12 @@ class MainActivity : AppCompatActivity() {
                         binding.emptyText.visibility = View.GONE
                     }
                     binding.recipeAdapter.adapter = recipesAdapter
-                    binding.recipeAdapter.layoutManager = LinearLayoutManager(this@MainActivity)
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                        binding.recipeAdapter.layoutManager = LinearLayoutManager(this@MainActivity)
+                    } else {
+                        binding.recipeAdapter.layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    }
+
                 } else {
                     Toast.makeText(applicationContext, "Something went wrong", Toast.LENGTH_SHORT).show()
                 }
@@ -128,10 +133,27 @@ class MainActivity : AppCompatActivity() {
                         binding.emptyText.visibility = View.GONE
                     }
                     binding.recipeAdapter.adapter = recipesAdapter
-                    binding.recipeAdapter.layoutManager =
-                        LinearLayoutManager(this@MainActivity)
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                        binding.recipeAdapter.layoutManager = LinearLayoutManager(this@MainActivity)
+                    } else {
+                        binding.recipeAdapter.layoutManager = GridLayoutManager(this@MainActivity, 2)
+                    }
                 }
             }
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        handleOrientationChange(newConfig.orientation)
+    }
+
+    private fun handleOrientationChange(orientation: Int) {
+        // Ваш код для обработки изменений ориентации экрана
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            binding.recipeAdapter.layoutManager = LinearLayoutManager(this@MainActivity)
+        } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            binding.recipeAdapter.layoutManager = GridLayoutManager(this, 2)
         }
     }
 }

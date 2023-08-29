@@ -1,12 +1,15 @@
 package com.example.recipessearch
 
 import android.app.Activity
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.recipessearch.data.api.Recipe
 import com.example.recipessearch.data.db.RecipeEntity
 import com.example.recipessearch.data.db.RecipesDao
@@ -99,5 +102,10 @@ class RecipeViewActivity : AppCompatActivity() {
     override fun onBackPressed() {
         setResult(Activity.RESULT_OK, null)
         finish()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        recreate()
     }
 }

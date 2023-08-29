@@ -72,6 +72,9 @@ class RecipesAdapter(
             if (isSavedRecipes) {
                 binding.deleteFromFollowedButton.visibility = View.VISIBLE
             }
+            Picasso.get()
+                .load(recipeData.image)
+                .into(binding.recipeImage)
             binding.deleteFromFollowedButton.setOnClickListener {
                 if (context is MainActivity) {
                     context.lifecycleScope.launch {
@@ -86,15 +89,9 @@ class RecipesAdapter(
                             }
                         }
                     }
-
                     Toast.makeText(context, "Рецепт удален из сохраненных", Toast.LENGTH_LONG).show()
                 }
-                Picasso.get()
-                    .load(recipeData.image)
-                    .into(binding.recipeImage)
-                }
-
-
+            }
         }
     }
 }
